@@ -229,9 +229,17 @@
             </div>
         </div>
 
-        <!-- Broadsheet View -->
+                <!-- Broadsheet View -->
         <div id="broadsheet-view" class="view">
-            <h3>Master Broadsheet</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>Master Broadsheet</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label>Filter by Class:</label>
+                    <select id="broadsheet-class-filter" onchange="renderBroadsheet()" style="width: auto;">
+                        <option value="all">All Classes</option>
+                    </select>
+                </div>
+            </div>
             <div id="broadsheet-container"></div>
         </div>
 
@@ -253,18 +261,44 @@
             </table>
         </div>
 
-        <!-- Manage Students View -->
+                <!-- Manage Students View -->
         <div id="manage-view" class="view hidden">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                     <h3>Add New Student</h3>
                     <input type="text" id="new-student-name" placeholder="Student Full Name">
+                    <select id="new-student-class">
+                        <option value="">Select Class</option>
+                        <optgroup label="Preschool">
+                            <option value="Pre-school1">Pre-school 1</option>
+                            <option value="Pre-school2">Pre-school 2</option>
+                            <option value="Nursery1">Nursery 1</option>
+                            <option value="Nursery2">Nursery 2</option>
+                        </optgroup>
+                        <optgroup label="Basic">
+                            <option value="Basic1">Basic 1</option>
+                            <option value="Basic2">Basic 2</option>
+                            <option value="Basic3">Basic 3</option>
+                            <option value="Basic4">Basic 4</option>
+                            <option value="Basic5">Basic 5</option>
+                        </optgroup>
+                        <optgroup label="JSS">
+                            <option value="JSS1">JSS 1</option>
+                            <option value="JSS2">JSS 2</option>
+                            <option value="JSS3">JSS 3</option>
+                        </optgroup>
+                    </select>
                     <button onclick="addStudent()" style="width: auto;">Add Student</button>
                 </div>
                 <div>
                     <h3>Manage Subjects</h3>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 5px; flex-direction: column;">
                         <input type="text" id="new-subject-name" placeholder="Subject Name">
+                        <select id="new-subject-section">
+                            <option value="Preschool">Preschool Section</option>
+                            <option value="Basic">Basic Section</option>
+                            <option value="JSS">JSS Section</option>
+                        </select>
                         <button onclick="addSubject()" style="width: auto;">Add Subject</button>
                     </div>
                     <ul id="subject-list" style="margin-top: 10px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;"></ul>
@@ -337,21 +371,27 @@
 
 <script>
         // Initial Data Setup
-    const USERS = {
-        'admin': { role: 'admin', name: 'Administrator' },
-        'preschool1': { role: 'teacher', name: 'Pre-school 1 Teacher', class: 'Pre-school1', subject: 'All Subjects' },
-        'preschool2': { role: 'teacher', name: 'Pre-school 2 Teacher', class: 'Pre-school2', subject: 'All Subjects' },
-        'nursery1': { role: 'teacher', name: 'Nursery 1 Teacher', class: 'Nursery1', subject: 'All Subjects' },
-        'nursery2': { role: 'teacher', name: 'Nursery 2 Teacher', class: 'Nursery2', subject: 'All Subjects' },
-                'basic1': { role: 'teacher', name: 'Basic 1 Teacher', class: 'Basic1', subject: 'All Subjects' },
-        'basic2': { role: 'teacher', name: 'Basic 2 Teacher', class: 'Basic2', subject: 'All Subjects' },
-        'basic3': { role: 'teacher', name: 'Basic 3 Teacher', class: 'Basic3', subject: 'All Subjects' },
-        'basic4': { role: 'teacher', name: 'Basic 4 Teacher', class: 'Basic4', subject: 'All Subjects' },
-        'basic5': { role: 'teacher', name: 'Basic 5 Teacher', class: 'Basic5', subject: 'All Subjects' },
-        'jss1': { role: 'teacher', name: 'JSS 1 Teacher', class: 'JSS1', subject: 'All Subjects' },
-        'jss2': { role: 'teacher', name: 'JSS 2 Teacher', class: 'JSS2', subject: 'All Subjects' },
-        'jss3': { role: 'teacher', name: 'JSS 3 Teacher', class: 'JSS3', subject: 'All Subjects' }
-    };
+        const SECTIONS = {
+            'Preschool': ['Pre-school1', 'Pre-school2', 'Nursery1', 'Nursery2'],
+            'Basic': ['Basic1', 'Basic2', 'Basic3', 'Basic4', 'Basic5'],
+            'JSS': ['JSS1', 'JSS2', 'JSS3']
+        };
+
+        const USERS = {
+            'admin': { role: 'admin', name: 'Administrator' },
+            'preschool1': { role: 'teacher', name: 'Pre-school 1 Teacher', class: 'Pre-school1', section: 'Preschool' },
+            'preschool2': { role: 'teacher', name: 'Pre-school 2 Teacher', class: 'Pre-school2', section: 'Preschool' },
+            'nursery1': { role: 'teacher', name: 'Nursery 1 Teacher', class: 'Nursery1', section: 'Preschool' },
+            'nursery2': { role: 'teacher', name: 'Nursery 2 Teacher', class: 'Nursery2', section: 'Preschool' },
+            'basic1': { role: 'teacher', name: 'Basic 1 Teacher', class: 'Basic1', section: 'Basic' },
+            'basic2': { role: 'teacher', name: 'Basic 2 Teacher', class: 'Basic2', section: 'Basic' },
+            'basic3': { role: 'teacher', name: 'Basic 3 Teacher', class: 'Basic3', section: 'Basic' },
+            'basic4': { role: 'teacher', name: 'Basic 4 Teacher', class: 'Basic4', section: 'Basic' },
+            'basic5': { role: 'teacher', name: 'Basic 5 Teacher', class: 'Basic5', section: 'Basic' },
+            'jss1': { role: 'teacher', name: 'JSS 1 Teacher', class: 'JSS1', section: 'JSS' },
+            'jss2': { role: 'teacher', name: 'JSS 2 Teacher', class: 'JSS2', section: 'JSS' },
+            'jss3': { role: 'teacher', name: 'JSS 3 Teacher', class: 'JSS3', section: 'JSS' }
+        };
 
     let students = JSON.parse(localStorage.getItem('rms_students')) || [
         { id: 1, name: 'John Doe' },
@@ -388,26 +428,37 @@
         document.getElementById('report-card-modal').classList.add('hidden');
     }
 
-    function setupDashboard() {
+        function setupDashboard() {
         document.getElementById('user-welcome').innerText = `Welcome, ${currentUser.name}`;
         const badge = document.getElementById('role-badge');
         badge.innerText = currentUser.role.toUpperCase();
         badge.className = `badge badge-${currentUser.role}`;
 
-                if (currentUser.role === 'admin') {
+        if (currentUser.role === 'admin') {
             document.getElementById('admin-controls').classList.remove('hidden');
             document.getElementById('teacher-controls').classList.add('hidden');
+            
+            // Setup Broadsheet Class Filter
+            const filter = document.getElementById('broadsheet-class-filter');
+            filter.innerHTML = '<option value="all">All Classes</option>';
+            Object.values(SECTIONS).flat().forEach(cls => {
+                const opt = document.createElement('option');
+                opt.value = cls;
+                opt.innerText = cls;
+                filter.appendChild(opt);
+            });
+
             renderBroadsheet();
             switchTab('broadsheet');
         } else {
             document.getElementById('admin-controls').classList.add('hidden');
             document.getElementById('teacher-controls').classList.remove('hidden');
-            document.getElementById('class-heading').innerText = `Class: ${currentUser.class}`;
+            document.getElementById('class-heading').innerText = `Class: ${currentUser.class} (${currentUser.section} Section)`;
             
-            // Populate subject dropdown for teacher
+            // Populate subject dropdown for teacher based on their section
             const select = document.getElementById('teacher-subject-select');
             select.innerHTML = '';
-            getSubjects().forEach(sub => {
+            getSubjects(currentUser.section).forEach(sub => {
                 const opt = document.createElement('option');
                 opt.value = sub;
                 opt.innerText = sub;
@@ -430,8 +481,8 @@
         }
     }
 
-    // Teacher Functions
-        function renderTeacherView() {
+        // Teacher Functions
+    function renderTeacherView() {
         const tbody = document.getElementById('marks-body');
         const currentSubject = document.getElementById('teacher-subject-select').value;
         if (!currentSubject) return;
@@ -445,9 +496,21 @@
         });
 
         if (classStudents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No students found in this class. Ask Admin to assign students to this class in Report Card View.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No students found in this class. Ask Admin to assign students to this class.</td></tr>';
             return;
         }
+
+        const maxCA = currentUser.section === 'JSS' ? 30 : 40;
+        const maxExam = currentUser.section === 'JSS' ? 70 : 60;
+
+        document.querySelector('#subject-view thead tr').innerHTML = `
+            <th>Student Name</th>
+            <th>CA (${maxCA})</th>
+            <th>Exam (${maxExam})</th>
+            <th>Total (100)</th>
+            <th>Subject Teacher's Remark</th>
+            <th>Action</th>
+        `;
 
         classStudents.forEach(student => {
             const res = results.find(r => r.studentId === student.id && r.subject === currentSubject) || { ca: 0, exam: 0, remark: '' };
@@ -455,8 +518,8 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${student.name}</td>
-                <td><input type="number" value="${res.ca || 0}" id="ca-${student.id}" min="0" max="40" style="width: 70px;"></td>
-                <td><input type="number" value="${res.exam || 0}" id="exam-${student.id}" min="0" max="60" style="width: 70px;"></td>
+                <td><input type="number" value="${res.ca || 0}" id="ca-${student.id}" min="0" max="${maxCA}" style="width: 70px;"></td>
+                <td><input type="number" value="${res.exam || 0}" id="exam-${student.id}" min="0" max="${maxExam}" style="width: 70px;"></td>
                 <td><strong id="tot-${student.id}">${(res.ca || 0) + (res.exam || 0)}</strong></td>
                 <td><input type="text" value="${res.remark || ''}" id="rem-${student.id}" placeholder="Remark"></td>
                 <td><button onclick="saveScore(${student.id})" style="width: auto;">Save</button></td>
@@ -480,8 +543,11 @@
         const exam = parseInt(document.getElementById(`exam-${studentId}`).value) || 0;
         const remark = document.getElementById(`rem-${studentId}`).value;
         
-        if (ca < 0 || ca > 40 || exam < 0 || exam > 60) {
-            alert('Invalid marks! CA max 40, Exam max 60.');
+        const maxCA = currentUser.section === 'JSS' ? 30 : 40;
+        const maxExam = currentUser.section === 'JSS' ? 70 : 60;
+
+        if (ca < 0 || ca > maxCA || exam < 0 || exam > maxExam) {
+            alert(`Invalid marks! CA max ${maxCA}, Exam max ${maxExam}.`);
             return;
         }
 
@@ -498,13 +564,36 @@
         alert('Saved!');
     }
 
-    // Admin Functions
+        // Admin Functions
     function renderBroadsheet() {
         const container = document.getElementById('broadsheet-container');
-        const subjects = getSubjects();
+        const classFilter = document.getElementById('broadsheet-class-filter').value;
+        
+        let filteredStudents = students;
+        if (classFilter !== 'all') {
+            filteredStudents = students.filter(s => {
+                const details = JSON.parse(localStorage.getItem(`report_details_${s.id}`)) || {};
+                return details.class === classFilter;
+            });
+        }
+
+        if (filteredStudents.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding: 20px;">No students found for this class.</p>';
+            return;
+        }
+
+        // Determine section for filtered students (if filtered by class)
+        let section = 'Preschool'; 
+        if (classFilter !== 'all') {
+            for (const [sec, classes] of Object.entries(SECTIONS)) {
+                if (classes.includes(classFilter)) { section = sec; break; }
+            }
+        }
+
+        const subjects = getSubjects(classFilter === 'all' ? null : section);
         
         // Calculate Totals and Positions
-        const studentTotals = students.map(s => {
+        const studentTotals = filteredStudents.map(s => {
             const studentResults = results.filter(r => r.studentId === s.id);
             const total = studentResults.reduce((sum, r) => sum + (r.score || 0), 0);
             return { id: s.id, total };
@@ -514,9 +603,10 @@
         subjects.forEach(s => html += `<th>${s}<br><small>CA/Ex/Tot</small></th>`);
         html += `<th>Total Score</th><th>Average</th><th>Pos.</th><th>Grade</th><th>Action</th></tr></thead><tbody>`;
 
-        students.forEach(student => {
+        filteredStudents.forEach(student => {
             const pos = studentTotals.findIndex(st => st.id === student.id) + 1;
-            html += `<tr><td><strong>${student.name}</strong></td>`;
+            const details = JSON.parse(localStorage.getItem(`report_details_${student.id}`)) || {};
+            html += `<tr><td><strong>${student.name}</strong><br><small>${details.class || 'No Class'}</small></td>`;
             let totalScore = 0;
             let count = 0;
             subjects.forEach(s => {
@@ -539,20 +629,24 @@
         renderSubjectList();
     }
 
-    function getSubjects() {
-        return JSON.parse(localStorage.getItem('rms_subjects')) || ['Mathematics', 'English'];
+    function getSubjects(section = null) {
+        const allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
+        if (section) return allSubjects[section];
+        return [...new Set([...allSubjects.Preschool, ...allSubjects.Basic, ...allSubjects.JSS])];
     }
 
     function addSubject() {
         const name = document.getElementById('new-subject-name').value.trim();
+        const section = document.getElementById('new-subject-section').value;
         if (!name) return;
-        let subjects = getSubjects();
-        if (!subjects.includes(name)) {
-            subjects.push(name);
-            localStorage.setItem('rms_subjects', JSON.stringify(subjects));
+        
+        let allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
+        if (!allSubjects[section].includes(name)) {
+            allSubjects[section].push(name);
+            localStorage.setItem('rms_subjects_v2', JSON.stringify(allSubjects));
             document.getElementById('new-subject-name').value = '';
             renderBroadsheet();
-            alert('Subject added!');
+            alert(`Subject added to ${section} section!`);
         }
     }
 
@@ -560,32 +654,56 @@
         const list = document.getElementById('subject-list');
         if (!list) return;
         list.innerHTML = '';
-        getSubjects().forEach(s => {
-            const li = document.createElement('li');
-            li.style.display = 'flex';
-            li.style.justifyContent = 'space-between';
-            li.style.marginBottom = '5px';
-            li.innerHTML = `${s} <button onclick="deleteSubject('${s}')" style="width:auto; padding: 2px 10px; background:red;">X</button>`;
-            list.appendChild(li);
-        });
+        const allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
+        
+        for (const [section, subs] of Object.entries(allSubjects)) {
+            if (subs.length > 0) {
+                const header = document.createElement('li');
+                header.innerHTML = `<strong>${section}</strong>`;
+                header.style.background = '#eee';
+                header.style.padding = '2px 5px';
+                list.appendChild(header);
+                
+                subs.forEach(s => {
+                    const li = document.createElement('li');
+                    li.style.display = 'flex';
+                    li.style.justifyContent = 'space-between';
+                    li.style.marginBottom = '2px';
+                    li.innerHTML = `${s} <button onclick="deleteSubject('${section}', '${s}')" style="width:auto; padding: 0 5px; background:red; font-size:10px;">X</button>`;
+                    list.appendChild(li);
+                });
+            }
+        }
     }
 
-    function deleteSubject(sub) {
-        if (!confirm(`Delete ${sub}?`)) return;
-        let subjects = getSubjects().filter(s => s !== sub);
-        localStorage.setItem('rms_subjects', JSON.stringify(subjects));
+    function deleteSubject(section, sub) {
+        if (!confirm(`Delete ${sub} from ${section}?`)) return;
+        let allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
+        allSubjects[section] = allSubjects[section].filter(s => s !== sub);
+        localStorage.setItem('rms_subjects_v2', JSON.stringify(allSubjects));
         renderBroadsheet();
     }
 
     function addStudent() {
-        const name = document.getElementById('new-student-name').value;
-        if (!name) return;
+        const name = document.getElementById('new-student-name').value.trim();
+        const className = document.getElementById('new-student-class').value;
+        if (!name || !className) {
+            alert('Please enter name and select class');
+            return;
+        }
+        
         const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-        students.push({ id: newId, name });
+        const newStudent = { id: newId, name };
+        students.push(newStudent);
         localStorage.setItem('rms_students', JSON.stringify(students));
+        
+        // Save class details immediately
+        const details = { class: className };
+        localStorage.setItem(`report_details_${newId}`, JSON.stringify(details));
+        
         document.getElementById('new-student-name').value = '';
         renderBroadsheet();
-        alert('Student added!');
+        alert('Student added to class!');
     }
 
     // Report Card Functions
@@ -597,7 +715,7 @@
         return 'F';
     }
 
-    function viewReportCard(studentId) {
+        function viewReportCard(studentId) {
         const student = students.find(s => s.id === studentId);
         const studentResults = results.filter(r => r.studentId === studentId);
         
@@ -605,6 +723,12 @@
         const details = JSON.parse(localStorage.getItem(`report_details_${studentId}`)) || {};
         const schoolAddress = localStorage.getItem('school_address') || "Enter School Address Here...";
         const schoolMotto = localStorage.getItem('school_motto') || "Enter School Motto Here...";
+
+        // Determine section for header info
+        let studentSection = 'Preschool';
+        for (const [sec, classes] of Object.entries(SECTIONS)) {
+            if (classes.includes(details.class)) { studentSection = sec; break; }
+        }
 
         document.getElementById('rep-name').innerText = student.name;
         document.getElementById('rep-date').innerText = new Date().toLocaleDateString();
@@ -620,19 +744,36 @@
         document.getElementById('rep-class-teacher-remark').innerText = details.teacherRemark || '_________________';
         document.getElementById('rep-principal-remark').innerText = details.principalRemark || '_________________';
 
-        // Calculate Position
-        const studentTotals = students.map(s => {
+        // Update CA/Exam headers in report card based on section
+        const maxCA = studentSection === 'JSS' ? 30 : 40;
+        const maxExam = studentSection === 'JSS' ? 70 : 60;
+        document.querySelector('#report-card-template thead tr').innerHTML = `
+            <th>Subject</th>
+            <th>CA (${maxCA})</th>
+            <th>Exam (${maxExam})</th>
+            <th>Total (100)</th>
+            <th>Grade</th>
+            <th>Teacher's Remark</th>
+        `;
+
+        // Calculate Position (within their class)
+        const classStudents = students.filter(s => {
+            const d = JSON.parse(localStorage.getItem(`report_details_${s.id}`)) || {};
+            return d.class === details.class;
+        });
+        const classTotals = classStudents.map(s => {
             const res = results.filter(r => r.studentId === s.id);
             return { id: s.id, total: res.reduce((sum, r) => sum + (r.score || 0), 0) };
         }).sort((a, b) => b.total - a.total);
-        const pos = studentTotals.findIndex(st => st.id === studentId) + 1;
+
+        const pos = classTotals.findIndex(st => st.id === studentId) + 1;
         const suffix = (pos % 10 == 1 && pos != 11) ? 'st' : (pos % 10 == 2 && pos != 12) ? 'nd' : (pos % 10 == 3 && pos != 13) ? 'rd' : 'th';
-        document.getElementById('rep-position').innerText = pos + suffix;
+        document.getElementById('rep-position').innerText = pos > 0 ? pos + suffix : '--';
 
         const tbody = document.getElementById('rep-marks-body');
         tbody.innerHTML = '';
 
-        getSubjects().forEach(sub => {
+        getSubjects(studentSection).forEach(sub => {
             const r = studentResults.find(res => res.subject === sub) || { ca: '-', exam: '-', score: '-', remark: '-' };
             const tr = document.createElement('tr');
             tr.innerHTML = `
