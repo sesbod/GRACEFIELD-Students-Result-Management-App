@@ -200,8 +200,8 @@
         <h3>Result Portal</h3>
         <input type="text" id="username" placeholder="Username">
         <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <p style="font-size: 0.8em; color: #666;">Demo: admin/admin, teacher1/teacher1 (Math), teacher2/teacher2 (English)</p>
+                <button onclick="login()">Login</button>
+        <p style="font-size: 0.8em; color: #666;">Admin: admin/admin | Class Logins: preschool1, nursery1, basic1, jss1, etc.</p>
     </div>
 
     <!-- Main Dashboard -->
@@ -221,8 +221,12 @@
             </div>
         </div>
 
-        <div id="teacher-controls" class="hidden no-print">
-            <h3 id="subject-heading">Subject: </h3>
+                <div id="teacher-controls" class="hidden no-print">
+            <h3 id="class-heading">Class: </h3>
+            <div style="margin-bottom: 10px;">
+                <label>Select Subject to enter marks:</label>
+                <select id="teacher-subject-select" onchange="renderTeacherView()" style="width: auto;"></select>
+            </div>
         </div>
 
         <!-- Broadsheet View -->
@@ -332,11 +336,21 @@
 </div>
 
 <script>
-    // Initial Data Setup
+        // Initial Data Setup
     const USERS = {
         'admin': { role: 'admin', name: 'Administrator' },
-        'teacher1': { role: 'teacher', name: 'Mr. Smith', subject: 'Mathematics' },
-        'teacher2': { role: 'teacher', name: 'Ms. Davis', subject: 'English' }
+        'preschool1': { role: 'teacher', name: 'Pre-school 1 Teacher', class: 'Pre-school1', subject: 'All Subjects' },
+        'preschool2': { role: 'teacher', name: 'Pre-school 2 Teacher', class: 'Pre-school2', subject: 'All Subjects' },
+        'nursery1': { role: 'teacher', name: 'Nursery 1 Teacher', class: 'Nursery1', subject: 'All Subjects' },
+        'nursery2': { role: 'teacher', name: 'Nursery 2 Teacher', class: 'Nursery2', subject: 'All Subjects' },
+                'basic1': { role: 'teacher', name: 'Basic 1 Teacher', class: 'Basic1', subject: 'All Subjects' },
+        'basic2': { role: 'teacher', name: 'Basic 2 Teacher', class: 'Basic2', subject: 'All Subjects' },
+        'basic3': { role: 'teacher', name: 'Basic 3 Teacher', class: 'Basic3', subject: 'All Subjects' },
+        'basic4': { role: 'teacher', name: 'Basic 4 Teacher', class: 'Basic4', subject: 'All Subjects' },
+        'basic5': { role: 'teacher', name: 'Basic 5 Teacher', class: 'Basic5', subject: 'All Subjects' },
+        'jss1': { role: 'teacher', name: 'JSS 1 Teacher', class: 'JSS1', subject: 'All Subjects' },
+        'jss2': { role: 'teacher', name: 'JSS 2 Teacher', class: 'JSS2', subject: 'All Subjects' },
+        'jss3': { role: 'teacher', name: 'JSS 3 Teacher', class: 'JSS3', subject: 'All Subjects' }
     };
 
     let students = JSON.parse(localStorage.getItem('rms_students')) || [
@@ -380,7 +394,7 @@
         badge.innerText = currentUser.role.toUpperCase();
         badge.className = `badge badge-${currentUser.role}`;
 
-        if (currentUser.role === 'admin') {
+                if (currentUser.role === 'admin') {
             document.getElementById('admin-controls').classList.remove('hidden');
             document.getElementById('teacher-controls').classList.add('hidden');
             renderBroadsheet();
@@ -388,7 +402,18 @@
         } else {
             document.getElementById('admin-controls').classList.add('hidden');
             document.getElementById('teacher-controls').classList.remove('hidden');
-            document.getElementById('subject-heading').innerText = `Subject: ${currentUser.subject}`;
+            document.getElementById('class-heading').innerText = `Class: ${currentUser.class}`;
+            
+            // Populate subject dropdown for teacher
+            const select = document.getElementById('teacher-subject-select');
+            select.innerHTML = '';
+            getSubjects().forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.innerText = sub;
+                select.appendChild(opt);
+            });
+            
             renderTeacherView();
             switchTab('subject');
         }
@@ -406,12 +431,26 @@
     }
 
     // Teacher Functions
-    function renderTeacherView() {
+        function renderTeacherView() {
         const tbody = document.getElementById('marks-body');
+        const currentSubject = document.getElementById('teacher-subject-select').value;
+        if (!currentSubject) return;
+        
         tbody.innerHTML = '';
         
-        students.forEach(student => {
-            const res = results.find(r => r.studentId === student.id && r.subject === currentUser.subject) || { ca: 0, exam: 0, remark: '' };
+        // Filter students by class
+        const classStudents = students.filter(s => {
+            const details = JSON.parse(localStorage.getItem(`report_details_${s.id}`)) || {};
+            return details.class === currentUser.class;
+        });
+
+        if (classStudents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No students found in this class. Ask Admin to assign students to this class in Report Card View.</td></tr>';
+            return;
+        }
+
+        classStudents.forEach(student => {
+            const res = results.find(r => r.studentId === student.id && r.subject === currentSubject) || { ca: 0, exam: 0, remark: '' };
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -424,7 +463,6 @@
             `;
             tbody.appendChild(tr);
 
-            // Real-time total update
             const caInput = tr.querySelector(`#ca-${student.id}`);
             const exInput = tr.querySelector(`#exam-${student.id}`);
             const totDisp = tr.querySelector(`#tot-${student.id}`);
@@ -437,6 +475,7 @@
     }
 
     function saveScore(studentId) {
+        const currentSubject = document.getElementById('teacher-subject-select').value;
         const ca = parseInt(document.getElementById(`ca-${studentId}`).value) || 0;
         const exam = parseInt(document.getElementById(`exam-${studentId}`).value) || 0;
         const remark = document.getElementById(`rem-${studentId}`).value;
@@ -446,8 +485,8 @@
             return;
         }
 
-        const existingIndex = results.findIndex(r => r.studentId === studentId && r.subject === currentUser.subject);
-        const scoreData = { studentId, subject: currentUser.subject, ca, exam, score: ca + exam, remark };
+        const existingIndex = results.findIndex(r => r.studentId === studentId && r.subject === currentSubject);
+        const scoreData = { studentId, subject: currentSubject, ca, exam, score: ca + exam, remark };
 
         if (existingIndex > -1) {
             results[existingIndex] = scoreData;
@@ -456,7 +495,7 @@
         }
 
         localStorage.setItem('rms_results', JSON.stringify(results));
-        alert('Score and remark saved!');
+        alert('Saved!');
     }
 
     // Admin Functions
