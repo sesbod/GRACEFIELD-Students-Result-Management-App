@@ -293,14 +293,30 @@
                     <h3 style="margin-top: 20px;">Student List</h3>
                     <div id="admin-student-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;"></div>
                 </div>
-                <div>
+                                <div>
                     <h3>Manage Subjects</h3>
                     <div style="display: flex; gap: 5px; flex-direction: column;">
                         <input type="text" id="new-subject-name" placeholder="Subject Name">
                         <select id="new-subject-section">
-                            <option value="Preschool">Preschool Section</option>
-                            <option value="Basic">Basic Section</option>
-                            <option value="JSS">JSS Section</option>
+                            <option value="">Select Specific Class for this Subject</option>
+                            <optgroup label="Preschool">
+                                <option value="Pre-school1">Pre-school 1</option>
+                                <option value="Pre-school2">Pre-school 2</option>
+                                <option value="Nursery1">Nursery 1</option>
+                                <option value="Nursery2">Nursery 2</option>
+                            </optgroup>
+                            <optgroup label="Basic">
+                                <option value="Basic1">Basic 1</option>
+                                <option value="Basic2">Basic 2</option>
+                                <option value="Basic3">Basic 3</option>
+                                <option value="Basic4">Basic 4</option>
+                                <option value="Basic5">Basic 5</option>
+                            </optgroup>
+                            <optgroup label="JSS">
+                                <option value="JSS1">JSS 1</option>
+                                <option value="JSS2">JSS 2</option>
+                                <option value="JSS3">JSS 3</option>
+                            </optgroup>
                         </select>
                         <button onclick="addSubject()" style="width: auto;">Add Subject</button>
                     </div>
@@ -443,15 +459,15 @@
 
             renderBroadsheet();
             switchTab('broadsheet');
-        } else {
+                } else {
             document.getElementById('admin-controls').classList.add('hidden');
             document.getElementById('teacher-controls').classList.remove('hidden');
-            document.getElementById('class-heading').innerText = `Class: ${currentUser.class} (${currentUser.section} Section)`;
+            document.getElementById('class-heading').innerText = `Class: ${currentUser.class}`;
             
-            // Populate subject dropdown for teacher based on their section
+            // Strictly fetch subjects ONLY for this teacher's class
             const select = document.getElementById('teacher-subject-select');
             select.innerHTML = '';
-            getSubjects(currentUser.section).forEach(sub => {
+            getSubjects(currentUser.class).forEach(sub => {
                 const opt = document.createElement('option');
                 opt.value = sub;
                 opt.innerText = sub;
@@ -575,58 +591,46 @@
                 return;
             }
 
-            // Determine section for filtered students
-            let section = 'Preschool'; 
-            if (classFilter !== 'all') {
-                for (const [sec, classes] of Object.entries(SECTIONS)) {
-                    if (classes.includes(classFilter)) { section = sec; break; }
-                }
-            } else {
-                // Default to first section for header logic if 'all'
-                section = 'Preschool';
+                    // Determine section for filtered students
+        const subjects = getSubjects(classFilter === 'all' ? null : classFilter);
+        
+        // Calculate Totals and Positions
+        const studentTotals = filteredStudents.map(s => {
+            const studentResults = results.filter(r => r.studentId === s.id);
+            const total = studentResults.reduce((sum, r) => sum + (r.score || 0), 0);
+            return { id: s.id, total };
+        }).sort((a, b) => b.total - a.total);
+
+        let html = `<div style="overflow-x: auto;"><table><thead><tr><th>Student</th>`;
+        subjects.forEach(s => html += `<th>${s}<br><small>CA/Ex/Tot</small></th>`);
+        html += `<th>Total Score</th><th>Average</th><th>Pos.</th><th>Grade</th><th>Action</th></tr></thead><tbody>`;
+
+        filteredStudents.forEach(student => {
+            const pos = studentTotals.findIndex(st => st.id === student.id) + 1;
+            const details = JSON.parse(localStorage.getItem(`report_details_${student.id}`)) || {};
+            
+            let studentSection = 'Preschool';
+            for (const [sec, classes] of Object.entries(SECTIONS)) {
+                if (classes.includes(details.class)) { studentSection = sec; break; }
             }
 
-            const subjects = getSubjects(classFilter === 'all' ? null : section);
-        
-            // Calculate Totals and Positions
-            const studentTotals = filteredStudents.map(s => {
-                const studentResults = results.filter(r => r.studentId === s.id);
-                const total = studentResults.reduce((sum, r) => sum + (r.score || 0), 0);
-                return { id: s.id, total };
-            }).sort((a, b) => b.total - a.total);
-
-            let html = `<div style="overflow-x: auto;"><table><thead><tr><th>Student</th>`;
-            subjects.forEach(s => html += `<th>${s}<br><small>CA/Ex/Tot</small></th>`);
-            html += `<th>Total Score</th><th>Average</th><th>Pos.</th><th>Grade</th><th>Action</th></tr></thead><tbody>`;
-
-            filteredStudents.forEach(student => {
-                const pos = studentTotals.findIndex(st => st.id === student.id) + 1;
-                const details = JSON.parse(localStorage.getItem(`report_details_${student.id}`)) || {};
-            
-                let studentSection = 'Preschool';
-                for (const [sec, classes] of Object.entries(SECTIONS)) {
-                    if (classes.includes(details.class)) { studentSection = sec; break; }
+            html += `<tr><td><strong>${student.name}</strong><br><small>${details.class || 'No Class'}</small></td>`;
+            let totalScore = 0;
+            let count = 0;
+            subjects.forEach(s => {
+                const res = results.find(r => r.studentId === student.id && r.subject === s);
+                if (res) {
+                    html += `<td>${res.ca}/${res.exam}/<strong>${res.score}</strong></td>`;
+                    totalScore += res.score;
+                    count++;
+                } else {
+                    html += `<td>-/-/-</td>`;
                 }
-
-                const isJSS = studentSection === 'JSS';
-
-                html += `<tr><td><strong>${student.name}</strong><br><small>${details.class || 'No Class'}</small></td>`;
-                let totalScore = 0;
-                let count = 0;
-                subjects.forEach(s => {
-                    const res = results.find(r => r.studentId === student.id && r.subject === s);
-                    if (res) {
-                        html += `<td>${res.ca}/${res.exam}/<strong>${res.score}</strong></td>`;
-                        totalScore += res.score;
-                        count++;
-                    } else {
-                        html += `<td>-/-/-</td>`;
-                    }
-                });
-                const avg = count > 0 ? (totalScore / count).toFixed(1) : 0;
-                html += `<td>${totalScore}</td><td>${avg}</td><td>${pos}</td><td>${getGrade(avg)}</td>`;
-                html += `<td><button onclick="viewReportCard(${student.id})" style="width: auto;">View Report</button></td></tr>`;
             });
+            const avg = count > 0 ? (totalScore / count).toFixed(1) : 0;
+            html += `<td>${totalScore}</td><td>${avg}</td><td>${pos}</td><td>${getGrade(avg)}</td>`;
+            html += `<td><button onclick="viewReportCard(${student.id})" style="width: auto;">View Report</button></td></tr>`;
+        });
 
             html += `</tbody></table></div>`;
             container.innerHTML = html;
@@ -670,24 +674,34 @@
             alert('Student removed successfully.');
         }
 
-    function getSubjects(section = null) {
-        const allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
-        if (section) return allSubjects[section];
-        return [...new Set([...allSubjects.Preschool, ...allSubjects.Basic, ...allSubjects.JSS])];
+        function getSubjects(className = null) {
+        // Subjects are now strictly tied to CLASSES, not Sections
+        const allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v3')) || {};
+        if (className) return allSubjects[className] || [];
+        
+        // Admin master view: Unique list of every subject across all classes
+        return [...new Set(Object.values(allSubjects).flat())];
     }
 
     function addSubject() {
         const name = document.getElementById('new-subject-name').value.trim();
-        const section = document.getElementById('new-subject-section').value;
-        if (!name) return;
+        const className = document.getElementById('new-subject-section').value; // Now points to Class selection
+        if (!name || !className) {
+            alert('Please enter subject name and select a class');
+            return;
+        }
         
-        let allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
-        if (!allSubjects[section].includes(name)) {
-            allSubjects[section].push(name);
-            localStorage.setItem('rms_subjects_v2', JSON.stringify(allSubjects));
+        let allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v3')) || {};
+        if (!allSubjects[className]) allSubjects[className] = [];
+        
+        if (!allSubjects[className].includes(name)) {
+            allSubjects[className].push(name);
+            localStorage.setItem('rms_subjects_v3', JSON.stringify(allSubjects));
             document.getElementById('new-subject-name').value = '';
             renderBroadsheet();
-            alert(`Subject added to ${section} section!`);
+            alert(`Subject added to ${className}!`);
+        } else {
+            alert('Subject already exists in this class');
         }
     }
 
@@ -695,33 +709,35 @@
         const list = document.getElementById('subject-list');
         if (!list) return;
         list.innerHTML = '';
-        const allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
+        const allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v3')) || {};
         
-        for (const [section, subs] of Object.entries(allSubjects)) {
+        Object.keys(allSubjects).sort().forEach(cls => {
+            const subs = allSubjects[cls];
             if (subs.length > 0) {
                 const header = document.createElement('li');
-                header.innerHTML = `<strong>${section}</strong>`;
+                header.innerHTML = `<strong>${cls}</strong>`;
                 header.style.background = '#eee';
                 header.style.padding = '2px 5px';
+                header.style.marginTop = '10px';
                 list.appendChild(header);
                 
                 subs.forEach(s => {
                     const li = document.createElement('li');
                     li.style.display = 'flex';
                     li.style.justifyContent = 'space-between';
-                    li.style.marginBottom = '2px';
-                    li.innerHTML = `${s} <button onclick="deleteSubject('${section}', '${s}')" style="width:auto; padding: 0 5px; background:red; font-size:10px;">X</button>`;
+                    li.style.padding = '2px 5px';
+                    li.innerHTML = `${s} <button onclick="deleteSubject('${cls}', '${s}')" style="width:auto; padding: 0 5px; background:red; font-size:10px;">X</button>`;
                     list.appendChild(li);
                 });
             }
-        }
+        });
     }
 
-    function deleteSubject(section, sub) {
-        if (!confirm(`Delete ${sub} from ${section}?`)) return;
-        let allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v2')) || { Preschool: [], Basic: [], JSS: [] };
-        allSubjects[section] = allSubjects[section].filter(s => s !== sub);
-        localStorage.setItem('rms_subjects_v2', JSON.stringify(allSubjects));
+    function deleteSubject(className, sub) {
+        if (!confirm(`Delete ${sub} from ${className}?`)) return;
+        let allSubjects = JSON.parse(localStorage.getItem('rms_subjects_v3')) || {};
+        allSubjects[className] = allSubjects[className].filter(s => s !== sub);
+        localStorage.setItem('rms_subjects_v3', JSON.stringify(allSubjects));
         renderBroadsheet();
     }
 
