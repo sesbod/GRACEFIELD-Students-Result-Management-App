@@ -396,18 +396,8 @@
             'jss3': { role: 'teacher', name: 'JSS 3 Teacher', class: 'JSS3', section: 'JSS' }
         };
 
-    let students = JSON.parse(localStorage.getItem('rms_students')) || [
-        { id: 1, name: 'John Doe' },
-        { id: 2, name: 'Jane Wilson' },
-        { id: 3, name: 'Robert Brown' }
-    ];
-
-    let results = JSON.parse(localStorage.getItem('rms_results')) || [
-        { studentId: 1, subject: 'Mathematics', score: 85 },
-        { studentId: 1, subject: 'English', score: 78 },
-        { studentId: 2, subject: 'Mathematics', score: 92 },
-        { studentId: 2, subject: 'English', score: 88 }
-    ];
+        let students = JSON.parse(localStorage.getItem('rms_students')) || [];
+    let results = JSON.parse(localStorage.getItem('rms_results')) || [];
 
     let currentUser = null;
 
@@ -613,11 +603,12 @@
                 const pos = studentTotals.findIndex(st => st.id === student.id) + 1;
                 const details = JSON.parse(localStorage.getItem(`report_details_${student.id}`)) || {};
             
-                // Re-calculate section per student for CA/Exam ratio in JSS
                 let studentSection = 'Preschool';
                 for (const [sec, classes] of Object.entries(SECTIONS)) {
                     if (classes.includes(details.class)) { studentSection = sec; break; }
                 }
+
+                const isJSS = studentSection === 'JSS';
 
                 html += `<tr><td><strong>${student.name}</strong><br><small>${details.class || 'No Class'}</small></td>`;
                 let totalScore = 0;
